@@ -18,7 +18,7 @@ on:
       REPO_NAME:
         required: true
       SERVICE_SECRET:
-        required: false
+        required: true
 
 jobs:
   push-to-registry:
@@ -63,12 +63,10 @@ jobs:
           kubectl create namespace ${{ env.ENV }} --dry-run=client -o yaml | kubectl apply -f -\
 
       - name: Create Secret YAML file
-        if: ${{ env.SERVICE_SECRET != null }}
         run: |
           cat <<EOF > secret.yaml
           ${{ env.SERVICE_SECRET }}
       - name: Apply Secret
-        if: ${{ env.SERVICE_SECRET != null }}
         run: kubectl apply -f secret.yaml
         
       - uses: akiojin/decode-base64-github-action@v0.1.0
