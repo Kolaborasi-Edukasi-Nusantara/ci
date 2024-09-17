@@ -19,8 +19,6 @@ on:
         required: true
       SERVICE_SECRET:
         required: false
-      SLACK_WEBHOOK_URL:
-        required: true
 
 jobs:
   push-to-registry:
