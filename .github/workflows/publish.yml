@@ -33,6 +33,16 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
+      - name: Debug Inputs
+        run: |
+          echo "DO_ACCESS_TOKEN: ${{ inputs.DO_ACCESS_TOKEN }}"
+          echo "DO_REGISTRY: ${{ inputs.DO_REGISTRY }}"
+          echo "ENV: ${{ inputs.ENV }}"
+          echo "GCP_SQL_CREDENTIAL: ${{ inputs.GCP_SQL_CREDENTIAL }}"
+          echo "KUBE_CONFIG: ${{ inputs.KUBE_CONFIG }}"
+          echo "KUBE_CLUSTER_ID: ${{ inputs.KUBE_CLUSTER_ID }}"
+          echo "REPO_NAME: ${{ inputs.REPO_NAME }}"
+          echo "SERVICE_SECRET: ${{ inputs.SERVICE_SECRET }}"
       - uses: pnpm/action-setup@v3
         with:
           version: 8
