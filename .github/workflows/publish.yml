@@ -9,16 +9,16 @@ on:
       DO_REGISTRY:
         type: string
         required: true
-      GCP_PROJECT_ID:
+      ENV:
         type: string
         required: true
       GCP_SQL_CREDENTIAL:
         type: string
         required: true
-      KUBE_CONFIG_STAGING:
+      KUBE_CONFIG:
         type: string
         required: true
-      KUBE_CLUSTER_ID_STAGING:
+      KUBE_CLUSTER_ID:
         type: string
         required: true
       REPO_NAME:
@@ -54,9 +54,9 @@ jobs:
       - name: Login To Doctl Registry
         run: doctl registry login
       - name: Build Docker Image
-        run: docker build --target production --tag ${{ inputs.DO_REGISTRY }}/${{ inputs.REPO_NAME }}-${{ inputs.ENV }}:${{ inputs.VERSION }} .
+        run: docker build --target production --tag ${{ inputs.DO_REGISTRY }}/${{ inputs.REPO_NAME }}-${{ inputs.ENV }}:${{ env.VERSION }} .
       - name: Push To Docker Registry
-        run: docker push ${{ inputs.DO_REGISTRY }}/${{ inputs.REPO_NAME }}-${{ inputs.ENV }}:${{ inputs.VERSION }}
+        run: docker push ${{ inputs.DO_REGISTRY }}/${{ inputs.REPO_NAME }}-${{ inputs.ENV }}:${{ env.VERSION }}
   deploy:
     cancel-timeout-minutes: 5
     runs-on: ubuntu-latest
@@ -101,7 +101,7 @@ jobs:
         with:
           release: ${{ inputs.REPO_NAME }}
           track: ${{ inputs.ENV }}
-          version: ${{ inputs.VERSION }}
+          version: ${{ env.VERSION }}
           namespace: ${{ inputs.ENV }}
           chart: '.helm-${{ inputs.ENV }}'
           token: ${{ github.token }}
