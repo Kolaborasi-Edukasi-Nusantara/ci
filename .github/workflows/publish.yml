@@ -40,7 +40,7 @@ jobs:
       - name: Install Doctl
         uses: digitalocean/action-doctl@v2
         with:
-          token: ${{ env.DO_ACCESS_TOKEN }}
+          token: ${{ inputs.DO_ACCESS_TOKEN }}
       - name: Set Version ENV
         run: |
           export VERSION=$(grep version package.json | awk -F \" '{print $4}')
@@ -48,9 +48,9 @@ jobs:
       - name: Login To Doctl Registry
         run: doctl registry login
       - name: Build Docker Image
-        run: docker build --target production --tag ${{ env.DO_REGISTRY }}/${{ env.REPO_NAME }}-${{ env.ENV }}:${{ env.VERSION }} .
+        run: docker build --target production --tag ${{ inputs.DO_REGISTRY }}/${{ inputs.REPO_NAME }}-${{ inputs.ENV }}:${{ inputs.VERSION }} .
       - name: Push To Docker Registry
-        run: docker push ${{ env.DO_REGISTRY }}/${{ env.REPO_NAME }}-${{ env.ENV }}:${{ env.VERSION }}
+        run: docker push ${{ inputs.DO_REGISTRY }}/${{ inputs.REPO_NAME }}-${{ inputs.ENV }}:${{ inputs.VERSION }}
   deploy:
     cancel-timeout-minutes: 5
     runs-on: ubuntu-latest
@@ -63,22 +63,22 @@ jobs:
         with:
           token: ${{ secrets.DO_ACCESS_TOKEN }}
       - name: Save DigitalOcean Kubeconfig
-        run: doctl kubernetes cluster kubeconfig save --expiry-seconds 1200 ${{ env.KUBE_CLUSTER_ID }}
+        run: doctl kubernetes cluster kubeconfig save --expiry-seconds 1200 ${{ inputs.KUBE_CLUSTER_ID }}
       - name: Create Microservice Namespace
         run:
-          kubectl create namespace ${{ env.ENV }} --dry-run=client -o yaml | kubectl apply -f -\
+          kubectl create namespace ${{ inputs.ENV }} --dry-run=client -o yaml | kubectl apply -f -\
 
       - name: Create Secret YAML file
         run: |
           cat <<EOF > secret.yaml
-          ${{ env.SERVICE_SECRET }}
+          ${{ inputs.SERVICE_SECRET }}
       - name: Apply Secret
         run: kubectl apply -f secret.yaml
         
       - uses: akiojin/decode-base64-github-action@v0.1.0
         id: decode-gcp-credential
         with:
-          base64: ${{ env.GCP_SQL_CREDENTIAL }}
+          base64: ${{ inputs.GCP_SQL_CREDENTIAL }}
       - name: Create CloudSQL Service Account JSON
         run: |
           cat <<EOF > service-account-key.json
@@ -93,11 +93,11 @@ jobs:
       - name: Helm Deploy
         uses: vimeda/helm@v1.7.0
         with:
-          release: ${{ env.REPO_NAME }}
-          track: ${{ env.ENV }}
-          version: ${{ env.VERSION }}
-          namespace: ${{ env.ENV }}
-          chart: '.helm-${{ env.ENV }}'
+          release: ${{ inputs.REPO_NAME }}
+          track: ${{ inputs.ENV }}
+          version: ${{ inputs.VERSION }}
+          namespace: ${{ inputs.ENV }}
+          chart: '.helm-${{ inputs.ENV }}'
           token: ${{ github.token }}
         env:
-          KUBECONFIG_FILE: '${{ env.KUBE_CONFIG }}'
+          KUBECONFIG_FILE: '${{ inputs.KUBE_CONFIG }}'
