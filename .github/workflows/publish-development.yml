@@ -1,26 +1,8 @@
-name: publish
+name: publish-development
 
 on:
   workflow_call:
     inputs:
-      DO_ACCESS_TOKEN:
-        type: string
-        required: true
-      DO_REGISTRY:
-        type: string
-        required: true
-      ENV:
-        type: string
-        required: true
-      GCP_SQL_CREDENTIAL:
-        type: string
-        required: true
-      KUBE_CONFIG:
-        type: string
-        required: true
-      KUBE_CLUSTER_ID:
-        type: string
-        required: true
       REPO_NAME:
         type: string
         required: true
@@ -46,7 +28,7 @@ jobs:
       - name: Install Doctl
         uses: digitalocean/action-doctl@v2
         with:
-          token: ${{ inputs.DO_ACCESS_TOKEN }}
+          token: ${{ secrets.DO_ACCESS_TOKEN }}
       - name: Set Version ENV
         run: |
           export VERSION=$(grep version package.json | awk -F \" '{print $4}')
@@ -54,9 +36,9 @@ jobs:
       - name: Login To Doctl Registry
         run: doctl registry login
       - name: Build Docker Image
-        run: docker build --target production --tag ${{ inputs.DO_REGISTRY }}/${{ inputs.REPO_NAME }}-${{ inputs.ENV }}:${{ env.VERSION }} .
+        run: docker build --target production --tag ${{ secrets.DO_REGISTRY_STAGING }}/${{ inputs.REPO_NAME }}-${{ env.ENV }}:${{ env.VERSION }} .
       - name: Push To Docker Registry
-        run: docker push ${{ inputs.DO_REGISTRY }}/${{ inputs.REPO_NAME }}-${{ inputs.ENV }}:${{ env.VERSION }}
+        run: docker push ${{ secrets.DO_REGISTRY_STAGING }}/${{ inputs.REPO_NAME }}-${{ env.ENV }}:${{ env.VERSION }}
   deploy:
     cancel-timeout-minutes: 5
     runs-on: ubuntu-latest
@@ -69,10 +51,10 @@ jobs:
         with:
           token: ${{ secrets.DO_ACCESS_TOKEN }}
       - name: Save DigitalOcean Kubeconfig
-        run: doctl kubernetes cluster kubeconfig save --expiry-seconds 1200 ${{ inputs.KUBE_CLUSTER_ID }}
+        run: doctl kubernetes cluster kubeconfig save --expiry-seconds 1200 ${{ secrets.KUBE_CLUSTER_ID_STAGING }}
       - name: Create Microservice Namespace
         run:
-          kubectl create namespace ${{ inputs.ENV }} --dry-run=client -o yaml | kubectl apply -f -\
+          kubectl create namespace ${{ env.ENV }} --dry-run=client -o yaml | kubectl apply -f -\
 
       - name: Create Secret YAML file
         run: |
@@ -84,7 +66,7 @@ jobs:
       - uses: akiojin/decode-base64-github-action@v0.1.0
         id: decode-gcp-credential
         with:
-          base64: ${{ inputs.GCP_SQL_CREDENTIAL }}
+          base64: ${{ secrets.GCP_SQL_CREDENTIAL_STAGING }}
       - name: Create CloudSQL Service Account JSON
         run: |
           cat <<EOF > service-account-key.json
@@ -100,10 +82,10 @@ jobs:
         uses: vimeda/helm@v1.7.0
         with:
           release: ${{ inputs.REPO_NAME }}
-          track: ${{ inputs.ENV }}
+          track: ${{ env.ENV }}
           version: ${{ env.VERSION }}
-          namespace: ${{ inputs.ENV }}
-          chart: '.helm-${{ inputs.ENV }}'
+          namespace: ${{ env.ENV }}
+          chart: '.helm-${{ env.ENV }}'
           token: ${{ github.token }}
         env:
-          KUBECONFIG_FILE: '${{ inputs.KUBE_CONFIG }}'
+          KUBECONFIG_FILE: '${{ secrets.KUBE_CONFIG_STAGING }}'
