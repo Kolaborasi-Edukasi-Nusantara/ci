@@ -33,9 +33,9 @@ jobs:
       - name: Login To Doctl Registry
         run: doctl registry login
       - name: Build Docker Image
-        run: docker build --target production --tag ${{ secrets.DO_REGISTRY_STAGING }}/${{ inputs.REPO_NAME }}-${{ env.ENV }}:${{ env.VERSION }} .
+        run: docker build --target production --tag ${{ secrets.DO_REGISTRY }}/${{ inputs.REPO_NAME }}-${{ env.ENV }}:${{ env.VERSION }} .
       - name: Push To Docker Registry
-        run: docker push ${{ secrets.DO_REGISTRY_STAGING }}/${{ inputs.REPO_NAME }}-${{ env.ENV }}:${{ env.VERSION }}
+        run: docker push ${{ secrets.DO_REGISTRY }}/${{ inputs.REPO_NAME }}-${{ env.ENV }}:${{ env.VERSION }}
   deploy:
     cancel-timeout-minutes: 5
     runs-on: ubuntu-latest
